@@ -1,0 +1,202 @@
+(function () {
+  let isOpen = false; // Flag to track the UI state
+
+//Code to make it custom######################################################################################################
+
+  function addHoverEffect(element) {
+    element.addEventListener("mouseenter", () => {
+        element.style.background = "rgba(21, 22, 25, 1)"; // Change to red on hover
+    });
+
+    element.addEventListener("mouseleave", () => {
+        element.style.background = "rgba(17, 18, 20, 1)"; // Change back to black on mouse leave
+    });
+  }
+
+  function newDiv(name, pos, left, top, width, height, corner, background, visibility, div, hover, callback) {
+    const ui = createDivWithStyles(name, {
+      position: pos,
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+      overflow: "auto",
+      borderRadius: corner,
+      background: background,
+      visibility: visibility,
+    });
+    div.appendChild(ui);
+    return ui;
+  }
+
+  function newButton(name, pos, left, top, corner, thickness, background, color, fontsize, font, textpos, cursor, div, hover, callback) {
+    const button = createDivWithStyles(name, {
+      position: pos,
+      top: top,
+      left: left,
+      borderRadius: corner,
+      padding: thickness,
+      background: background, // Black background
+      color: color, // White text color for contrast
+      fontSize: fontsize,
+      fontWeight: font,
+      boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)", // Box shadow for depth
+      textAlign: textpos, // Aligns the text to the right within the div
+      zIndex: "10002", // Ensure it's above other elements
+      transition: "background-color 0.3s ease", // Smooth transition effect
+      cursor: cursor, // Add pointer cursor for better UX
+    });
+    button.textContent = name;
+    button.onclick = callback;
+
+    // Add hover effect if hover is true
+    if (hover) {
+        addHoverEffect(button);
+    }
+
+    div.appendChild(button);
+  }
+
+//Main UI######################################################################################################
+
+  let Main = createDivWithStyles("Main", {
+    position: "fixed",
+    zIndex: "10001",
+    left: "50%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "70%",
+    height: "70%",
+    maxWidth: "100%",
+    maxHeight: "100%",
+    borderRadius: "10px",
+    background: "rgba(50, 51, 56, 0.9)",
+  });
+
+  let Topbar = newDiv("Topbar", 'absolute', '0', '0', '100%', '5%', '10px', 'rgba(30, 31, 35, 0)', 'visible', Main, false, function () {});
+
+  let Section = newDiv("Section", 'absolute', '0', '0', '20%', '100%', '10px', 'rgba(40, 41, 45, 1)', 'visible', Main, false, function () {});
+
+  let ButtonList = newDiv("ButtonList", 'absolute', '0', '0', '60%', '100%', '10px', '', '', Section, false, function () {});
+
+  let ContentUi = newDiv("ContentUi", 'fixed', '20%', '5%', '80%', '95%', '10px', 'rgba(255, 0, 0, 1)', 'hidden', Main, false, function () {});
+
+  newButton("Vixinity client", '', '10px', '10px', '5px', '8px', 'rgba(17, 18, 20, 1)', '#FFF', '16px', 'bold', 'left', '', Section, false, function () {});
+
+  newButton("Exploits", 'sticky', '50%', '10%', '5px', '8px', 'rgba(17, 18, 20, 1)', '#FFF', '16px', 'bold', 'right', 'pointer', ButtonList, true, function () {
+    ContentUi.style.visibility = "visible";
+    ContentUi.textContent = "Exploit content goes here."; // Change this text to whatever content you want to display
+  });
+
+  // Create the Content container to hold the Main container
+  let Content = document.createElement("div");
+  Content.style.display = "none"; // Initially hide the UI
+  Content.appendChild(Main);
+  document.body.appendChild(Content);
+
+  // Create the overlay
+  let Overlay = createDivWithStyles("Overlay", {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: "10000",
+    display: "none",
+  });
+  document.body.appendChild(Overlay);
+
+
+//#############################################################################################################
+
+  // Make Main draggable
+  (function makeDraggable() {
+    let isDragging = false;
+    let offset = { x: 0, y: 0 };
+
+    Topbar.addEventListener("mousedown", function (event) {
+      isDragging = true;
+      offset.x = event.clientX - Main.offsetLeft;
+      offset.y = event.clientY - Main.offsetTop;
+    });
+
+    document.addEventListener("mousemove", function (event) {
+      if (isDragging) {
+        Main.style.left = event.clientX - offset.x + "px";
+        Main.style.top = event.clientY - offset.y + "px";
+      }
+    });
+
+    document.addEventListener("mouseup", function () {
+      isDragging = false;
+    });
+  })();
+
+  // Listen for right shift keyup event
+  document.addEventListener("keyup", function (event) {
+    if (
+      event.key === "Shift" &&
+      event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT
+    ) {
+      isOpen = !isOpen; // Toggle the isOpen flag
+
+      if (isOpen) {
+        Content.style.display = "block"; // Show the UI
+        Overlay.style.display = "block"; // Show the overlay
+        showContent(); // Show the content inside ButtonList
+        addBlurToElements();
+      } else {
+        Content.style.display = "none"; // Hide the UI
+        Overlay.style.display = "none"; // Hide the overlay
+        removeBlurFromElements();
+      }
+    }
+  });
+
+  // Function to create a div with specified styles
+  function createDivWithStyles(id, styles) {
+    let div = document.createElement("div");
+    div.id = id;
+    Object.assign(div.style, styles);
+    return div;
+  }
+
+  // Function to add blur to elements except Content and Overlay
+  function addBlurToElements() {
+    let elements = document.body.children;
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i] !== Content && elements[i] !== Overlay) {
+        elements[i].style.filter = "blur(5px)";
+      }
+    }
+  }
+
+  // Function to remove blur from elements
+  function removeBlurFromElements() {
+    let elements = document.body.children;
+    for (let i = 0; i < elements.length; i++) {
+      elements[i].style.filter = "";
+    }
+  }
+
+  function showContent() {
+    let children = ButtonList.children;
+    for (let i = 0; i < children.length; i++) {
+      children[i].style.visibility = "visible";
+    }
+    let children2 = ContentUi.children;
+    for (let i = 0; i < children2.length; i++) {
+      children2[i].style.visibility = "visible";
+    }
+  }
+
+  // Handle window resize to adjust positions if necessary
+  window.addEventListener("resize", function () {
+    if (isOpen) {
+      // Adjust the Main position to keep it centered
+      Main.style.left = "50%";
+      Main.style.top = "50%";
+    }
+  });
+})();
